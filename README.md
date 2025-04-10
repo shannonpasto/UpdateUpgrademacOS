@@ -36,4 +36,4 @@ A user does not need to be logged on.
 The suCatURL changes with each major version of the macOS. The current URL for Sequoia is:
 >https://swscan.apple.com/content/catalogs/others/index-15-14-13-12-10.16-10.15-10.14-10.13-10.12-10.11-10.10-10.9-mountainlion-lion-snowleopard-leopard.merged-1.sucatalog
 
-The script can be run locally. Add your paramaters in the "variable declarations" section, save and execute `sudo sh ./update_upgrade_macos.sh`. Alternatively, append the paramaters on the coomand line, eg `sudo sh ./update_upgrade_macos.sh 1 2 3 "<securetokenusername>" "<secure token user password>" "<suCatURL>`
+The script can be run locally. Add your paramaters in the "variable declarations" section, save and execute `sudo sh ./update_upgrade_macos.sh`. Alternatively, append the paramaters on the command line, eg `sudo sh ./update_upgrade_macos.sh 1 2 3 "<securetokenusername>" "<secure token user password>" "<suCatURL>`
