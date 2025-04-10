@@ -5,7 +5,7 @@ A Jamf shell script that can be used to update or upgrade (including erase) macO
 
 This script was written as the Declarative Device Management commands available in Jamf Pro just aren't reliable enough.
 
-In a nutsheel this script will...
+In a nutshell this script will...
 - use the first caching server if found on the network
 - download the latest macOS (full) installer for the Mac
 - install (with optional erase) the update or upgrade
