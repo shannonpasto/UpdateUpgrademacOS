@@ -6,7 +6,7 @@
 #
 # https://www.jamf.com/blog/reinstall-a-clean-macos-with-one-button/
 #
-# v1.0 (10/04/2025)
+# v1.1 (18/04/2025)
 ###################
 ## uncomment the next line to output debugging to stdout
 #set -x
@@ -179,15 +179,48 @@ fi
 
 # see if we have a caching server on the network. pick the first one
 if [ "$(/usr/bin/sw_vers -buildVersion | /usr/bin/cut -c 1-2 -)" -ge 24 ]; then
-  cacheSrvrURL=$(/usr/bin/AssetCacheLocatorUtil -j 2>/dev/null | /usr/bin/jq -r '.results.reachability[]' | /usr/bin/head -n 1)
+  /bin/echo "macOS Sequoia or later installed. Using jq to extract the data"
+  cacheSrvrCount=$(/usr/bin/AssetCacheLocatorUtil -j 2>/dev/null | /usr/bin/jq -r '.results.reachability[]' | wc -l | xargs)
+  case "${cacheSrvrCount}" in
+    ''|0)
+      /bin/echo "No cache server(s) found"
+      ;;
+
+    1)
+      /bin/echo "${cacheSrvrCount} server(s) found"
+      cacheSrvrURL=$(/usr/bin/AssetCacheLocatorUtil -j 2>/dev/null | /usr/bin/jq -r ".results.reachability[0]")
+      ;;
+
+    *)
+      /bin/echo "${cacheSrvrCount} server found"
+      cacheSrvrCount=$((cacheSrvrCount-1))
+      cacheSrvrSelect=$(jot -r 1 0 "${cacheSrvrCount}")
+      cacheSrvrURL=$(/usr/bin/AssetCacheLocatorUtil -j 2>/dev/null | /usr/bin/jq -r ".results.reachability[${cacheSrvrSelect}]")
+      ;;
+  esac
 else
-  cacheCount=$(/usr/bin/AssetCacheLocatorUtil -j 2>/dev/null | /usr/bin/plutil -extract results.reachability raw -o - -)
-  if [ "${cacheCount}" -gt 0 ]; then
-    cacheSrvrURL=$(/usr/bin/AssetCacheLocatorUtil -j 2>/dev/null | /usr/bin/plutil -extract results.reachability.0 raw -o - -)
-  fi
+  /bin/echo "macOS Sonoma or older installed. Using plutil to extract the data"
+  cacheSrvrCount=$(/usr/bin/AssetCacheLocatorUtil -j 2>/dev/null | /usr/bin/plutil -extract results.reachability raw -o - -)
+  case "${cacheSrvrCount}" in
+    ''|0)
+      /bin/echo "No cache server(s) found"
+      ;;
+
+    1)
+      /bin/echo "${cacheSrvrCount} server(s) found"
+      cacheSrvrURL=$(/usr/bin/AssetCacheLocatorUtil -j 2>/dev/null | /usr/bin/plutil -extract results.reachability.0 raw -o - -)
+      ;;
+
+    *)
+      /bin/echo "${cacheSrvrCount} server(s) found"
+      cacheSrvrCount=$((cacheSrvrCount-1))
+      cacheSrvrSelect=$(jot -r 1 0 "${cacheSrvrCount}")
+      cacheSrvrURL=$(/usr/bin/AssetCacheLocatorUtil -j 2>/dev/null | /usr/bin/plutil -extract results.reachability."${cacheSrvrSelect}" raw -o - -)
+      ;;
+  esac
 fi
 if [ "${cacheSrvrURL}" ]; then
-  /bin/echo "Cache server located. Testing"
+  /bin/echo "Cache server selected. Testing for availablility"
   /usr/bin/curl --telnet-option 'BOGUS=1' --connect-timeout 2 -s telnet://"${cacheSrvrURL}"
   if [ $? = 48 ]; then
     /bin/echo "Cache server reachable"
